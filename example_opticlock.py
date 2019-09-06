@@ -45,49 +45,50 @@ assert MOCK
 
 def info(obj):
     return dict(
-            enums = [k for k, v in vars(obj).items()
-                 if isinstance(v, type(enum.IntEnum))],
-            props = [k for k, v in vars(type(obj)).items()
-                 if isinstance(v, property)],
-            methods = [k for k, v in vars(obj).items()
-                 if hasattr(v, 'isQtMethod') and v.isQtMethod],
-            signals = [k for k, v in vars(obj).items()
-                 if issubclass(type(v), object)
-                  and k not in ['_id', '_objectSignals', '_propertyCache', '_webChannel']]
+        enums=[k for k, v in vars(obj).items()
+                if isinstance(v, type(enum.IntEnum))],
+        props=[k for k, v in vars(type(obj)).items()
+                if isinstance(v, property)],
+        methods=[k for k, v in vars(obj).items()
+                if hasattr(v, 'isQtMethod') and v.isQtMethod],
+        signals=[k for k, v in vars(obj).items()
+                if issubclass(type(v), object)
+                and k not in
+                ['_id', '_objectSignals', '_propertyCache', '_webChannel']]
     )
 
 
 async def main():
     core = MenloSystemCore()
     await core.connect(sys.argv[1] or "wss://localhost/core/", user="guest", password="")
-    try:
-        async with core:
-            print(core.identity)
-            print(list(core.modules))
-            print(info(core.settings))
-            # print(info(core.modules["DDS"]))
-            core.log.logMessageReceived.connect(log)
-            sl = core.systemLogic
-            sl.isOperationalChanged.connect(isOperational_cb)
-            sl.wantWlmReadoutChanged.connect(wantWlmReadout_cb)
-            if not MOCK:
-                sl.mode = sl.Modes.TurnOn
-            if not MOCK:
-                sl.supplyWlmFrequencyError(0.)
-                # sl.frequencyOffset = 0.
-                # sl.driftSlope = 0.
-                sl.frequencyError = 0.
-                sl.frequencyFastOffset = 0.
-            while True:
-                print("mode:", sl.mode)
-                print("errorMessage:", sl.errorMessage)
-                print("isOperational:", sl.isOperational)
-                print("wantWlmReadout:", sl.wantWlmReadout)
-                print("frequencyOffset:", sl.frequencyOffset)
-                print("driftSlope:", sl.driftSlope)
-                await asyncio.sleep(1)
-    finally:
-        print("done")
+    async with core:
+        print(core.identity)
+        print(list(core.modules))
+        print(info(core.settings))
+        # print(info(core.modules["DDS"]))
+        msgs = await core.log.readLog(10)
+        for i in msgs:
+            print("Log:", i)
+        core.log.logMessageReceived.connect(log)
+        sl = core.systemLogic
+        sl.isOperationalChanged.connect(isOperational_cb)
+        sl.wantWlmReadoutChanged.connect(wantWlmReadout_cb)
+        if not MOCK:
+            sl.mode = sl.Modes.TurnOn
+        if not MOCK:
+            sl.supplyWlmFrequencyError(0.)
+            # sl.frequencyOffset = 0.
+            # sl.driftSlope = 0.
+            sl.frequencyError = 0.
+            sl.frequencyFastOffset = 0.
+        while True:
+            print("mode:", sl.mode)
+            print("errorMessage:", sl.errorMessage)
+            print("isOperational:", sl.isOperational)
+            print("wantWlmReadout:", sl.wantWlmReadout)
+            print("frequencyOffset:", sl.frequencyOffset)
+            print("driftSlope:", sl.driftSlope)
+            await asyncio.sleep(1)
 
 
 def isOperational_cb(v):
@@ -110,7 +111,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Cancelling")
         tasks.cancel()
-        loop.run_forever()
+        try:
+            loop.run_until_complete(tasks)
+        except asyncio.CancelledError:
+            pass
+        # loop.run_forever()
         tasks.exception()
     finally:
         loop.close()
