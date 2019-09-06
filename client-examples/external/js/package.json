@@ -1,0 +1,12 @@
+{
+  "name": "qwebchannel",
+  "version": "5.14.0-dev",
+  "description": "QtWebChannel of the Qt Toolkit",
+  "private": "true",
+  "main": "qtwebchannel/examples/webchannel/shared/qwebchannel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Milian Wolff <milian.wolff@kdab.com>",
+  "license": "LGPL-3.0 OR GPL-2.0+"
+}

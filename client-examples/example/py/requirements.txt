@@ -1,0 +1,4 @@
+menlosystemcore
+pywebchannel
+websocket-client
+websockets

@@ -1,0 +1,20 @@
+{
+  "name": "menlosystemcore-client-example",
+  "version": "0.1.0",
+  "description": "Simple example that shows connection to a server and a few operations.",
+  "private": "true",
+  "bin": {
+    "example-low_level.js": "example-low_level.js",
+    "example-high_level.js": "example-high_level.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Olaf Mandel <o.mandel@menlosystems.com>",
+  "license": "LGPL-3.0",
+  "dependencies": {
+    "menlosystemcore": "file:../../libs/js",
+    "qwebchannel": "file:../../external/js",
+    "ws": "^7.0.0"
+  }
+}

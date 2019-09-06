@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Log message display</title>
+    <script src="qwebchannel.js"></script>
+    <script src="menlosystemcore.js"></script>
+    <script>
+      var initialLines = 10
+
+      var core = new MenloSystemCore()
+      var url = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      url += '//' + window.location.host
+      url += '/core/'
+      core.connect(url)
+      core.connectedChanged.connect(function (connected) {
+        if (!connected) {
+          return
+        }
+        core.log.readLog(initialLines, function(msgs) {
+          var elem = document.getElementById('log')
+            for (var i in msgs) {
+              elem.textContent += msgs[i] + '\n'
+            }
+            core.log.logMessageReceived.connect(function (msg) {
+              elem.textContent += msg + '\n'
+            })
+          })
+      })
+    </script>
+  </head>
+  <body>
+    <h1>Log message display</h1>
+    <label for="log">Log:</label>
+    <pre id="log"></pre>
+  </body>
+</html>
