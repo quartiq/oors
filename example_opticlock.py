@@ -33,9 +33,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import asyncio
-from datetime import datetime
+import enum
 from menlosystemcore import MenloSystemCore
-import random
 import sys
 import os
 
@@ -44,26 +43,63 @@ MOCK = bool(os.getenv("OPTICLOCK_MOCK"))
 assert MOCK
 
 
+def info(obj):
+    return dict(
+            enums = [k for k, v in vars(obj).items()
+                 if isinstance(v, type(enum.IntEnum))],
+            props = [k for k, v in vars(type(obj)).items()
+                 if isinstance(v, property)],
+            methods = [k for k, v in vars(obj).items()
+                 if hasattr(v, 'isQtMethod') and v.isQtMethod],
+            signals = [k for k, v in vars(obj).items()
+                 if issubclass(type(v), object)
+                  and k not in ['_id', '_objectSignals', '_propertyCache', '_webChannel']]
+    )
+
+
 async def main():
     core = MenloSystemCore()
     await core.connect(sys.argv[1] or "wss://localhost/core/", user="guest", password="")
-    async with core:
-        if not MOCK:
-            core.systemLogic.mode = core.systemLogic.Modes.TurnOn
-        if not MOCK:
-            core.systemLogic.supplyWlmFrequencyError(0.)
-            # core.systemLogic.frequencyOffset = 0.
-            # core.systemLogic.driftSlope = 0.
-            core.systemLogic.frequencyError = 0.
-            core.systemLogic.frequencyFastOffset = 0.
-        while True:
-            print("mode:", core.systemLogic.mode)
-            print("errorMessage:", core.systemLogic.errorMessage)
-            print("isOperational:", core.systemLogic.isOperational)
-            print("wantWlmReadout:", core.systemLogic.wantWlmReadout)
-            print("frequencyOffset:", core.systemLogic.frequencyOffset)
-            print("driftSlope:", core.systemLogic.driftSlope)
-            await asyncio.sleep(1)
+    try:
+        async with core:
+            print(core.identity)
+            print(list(core.modules))
+            print(info(core.settings))
+            # print(info(core.modules["DDS"]))
+            core.log.logMessageReceived.connect(log)
+            sl = core.systemLogic
+            sl.isOperationalChanged.connect(isOperational_cb)
+            sl.wantWlmReadoutChanged.connect(wantWlmReadout_cb)
+            if not MOCK:
+                sl.mode = sl.Modes.TurnOn
+            if not MOCK:
+                sl.supplyWlmFrequencyError(0.)
+                # sl.frequencyOffset = 0.
+                # sl.driftSlope = 0.
+                sl.frequencyError = 0.
+                sl.frequencyFastOffset = 0.
+            while True:
+                print("mode:", sl.mode)
+                print("errorMessage:", sl.errorMessage)
+                print("isOperational:", sl.isOperational)
+                print("wantWlmReadout:", sl.wantWlmReadout)
+                print("frequencyOffset:", sl.frequencyOffset)
+                print("driftSlope:", sl.driftSlope)
+                await asyncio.sleep(1)
+    finally:
+        print("done")
+
+
+def isOperational_cb(v):
+    print("isOperational", v)
+
+
+def wantWlmReadout_cb(v):
+    print("wantWlmReadout", v)
+
+
+def log(v):
+    print("log", v)
 
 
 if __name__ == "__main__":
