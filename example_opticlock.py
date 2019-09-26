@@ -40,7 +40,7 @@ import os
 
 
 MOCK = bool(os.getenv("OPTICLOCK_MOCK"))
-assert MOCK
+# assert MOCK
 
 
 def info(obj):
@@ -77,16 +77,20 @@ async def main():
             sl.mode = sl.Modes.TurnOn
         if not MOCK:
             sl.supplyWlmFrequencyError(0.)
-            # sl.frequencyOffset = 0.
+            # sl.frequencyOffset = 348.16e6.
             # sl.driftSlope = 0.
-            sl.frequencyError = 0.
-            sl.frequencyFastOffset = 0.
+            # sl.frequencyError = 0.
+            # sl.frequencyFastOffset = 0.
         while True:
+            sl.supplyWlmFrequencyError(0.)
+            # sl.frequencyOffset = 348.16e6.
             print("mode:", sl.mode)
             print("errorMessage:", sl.errorMessage)
             print("isOperational:", sl.isOperational)
             print("wantWlmReadout:", sl.wantWlmReadout)
             print("frequencyOffset:", sl.frequencyOffset)
+            print("frequencyError:", sl.frequencyError)
+            print("frequencyFastOffset:", sl.frequencyFastOffset)
             print("driftSlope:", sl.driftSlope)
             await asyncio.sleep(1)
 
