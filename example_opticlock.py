@@ -34,13 +34,13 @@
 
 import asyncio
 import enum
-from menlosystemcore import MenloSystemCore
+from oors.menlosystemcore import MenloSystemCore
 import sys
 import os
 
 
 MOCK = bool(os.getenv("OPTICLOCK_MOCK"))
-# assert MOCK
+assert MOCK
 
 
 def info(obj):
@@ -75,14 +75,13 @@ async def main():
         sl.wantWlmReadoutChanged.connect(wantWlmReadout_cb)
         if not MOCK:
             sl.mode = sl.Modes.TurnOn
-        if not MOCK:
             sl.supplyWlmFrequencyError(0.)
             # sl.frequencyOffset = 348.16e6.
             # sl.driftSlope = 0.
             # sl.frequencyError = 0.
             # sl.frequencyFastOffset = 0.
         while True:
-            sl.supplyWlmFrequencyError(0.)
+            # sl.supplyWlmFrequencyError(0.)
             # sl.frequencyOffset = 348.16e6.
             print("mode:", sl.mode)
             print("errorMessage:", sl.errorMessage)
