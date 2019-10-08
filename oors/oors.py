@@ -31,3 +31,6 @@ class OORS(MenloSystemCore):
 
     def _cb_log(self, msg):
         logger.info("log message: %s", msg)
+
+    def ping(self):
+        return self.identity
