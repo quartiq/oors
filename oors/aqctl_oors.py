@@ -4,8 +4,13 @@ import argparse
 import os
 import asyncio
 
-from artiq.protocols.pc_rpc import simple_server_loop
-from artiq import tools
+from sipyco.pc_rpc import Server
+from sipyco import common_args
+
+from sipyco.common_args import (
+    simple_network_args, init_logger_from_args as init_logger,
+    bind_address_from_args, verbosity_args)
+
 
 from .oors import OORS
 
@@ -13,39 +18,37 @@ from .oors import OORS
 def get_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--uri", help="target host uri (default: '%(default)s')",
-                        default="wss://10.32.4.146/core/")
+                        default="wss://ms1/core/")
     parser.add_argument("--user", default="guest")
     parser.add_argument("--password", default="")
 
-    tools.simple_network_args(parser, 3276)
-    if hasattr(tools, "add_common_args"):
-        tools.add_common_args(parser)  # ARTIQ-5
-    else:
-        tools.verbosity_args(parser)   # ARTIQ-4
+    simple_network_args(parser, 3276)
+    verbosity_args(parser)
     return parser
 
 
 def main():
     args = get_argparser().parse_args()
-    tools.init_logger(args)
+    init_logger(args)
 
     if os.name == "nt":
         asyncio.set_event_loop(asyncio.ProactorEventLoop())
     loop = asyncio.get_event_loop()
 
     dev = OORS()
-    loop.run_until_complete(dev.connect(
-        args.uri, user=args.user, password=args.password))
 
-    try:
-        loop.run_until_complete(dev.misc())
-        simple_server_loop({"oors": dev},
-                           tools.bind_address_from_args(args), args.port)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        pass  # loop.run_until_complete(dev.disconnect())
-
+    async def run():
+        await dev.connect(args.uri, user=args.user, password=args.password)
+        await dev.misc()
+        server = Server({"oors": dev}, None, True)
+        await server.start(bind_address_from_args(args), args.port)
+        try:
+            await server.wait_terminate()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            await server.stop()
+    loop.run_until_complete(run())
 
 if __name__ == "__main__":
     main()
